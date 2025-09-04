@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Forex Position Size Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- PWA meta -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .box { padding: 15px; border: 1px solid #ccc; border-radius: 10px; }
+    label { display: block; margin-top: 10px; }
+    input, select, button { padding: 8px; width: 100%; margin-top: 5px; }
+    button { background: #007AFF; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    button:hover { background: #005BBB; }
+  </style>
+</head>
+<body>
+  <h2>Forex Position Size Calculator</h2>
+  <div class="box">
+    <label>Account Size (USD): <input type="number" id="accountSize" value="5000"></label>
+    <label>Risk %: <input type="number" id="riskPercent" value="1"></label>
+    <label>Stop Loss (pips): <input type="number" id="stopLoss" value="30"></label>
+
+    <label>Pair:
+      <select id="pair">
+        <option value="USDJPY">USDJPY</option>
+        <option value="CADJPY">CADJPY</option>
+        <option value="AUDJPY">AUDJPY</option>
+        <option value="EURUSD">EURUSD</option>
+        <option value="GBPUSD">GBPUSD</option>
+        <option value="USDCHF">USDCHF</option>
+        <option value="USDCAD">USDCAD</option>
+        <option value="AUDUSD">AUDUSD</option>
+        <option value="XAUUSD">XAUUSD (Gold)</option>
+        <option value="XAGUSD">XAGUSD (Silver)</option>
+        <option value="custom">Custom Pair</option>
+      </select>
+    </label>
+
+    <label id="usdJpyRateBox" style="display:none;">USDJPY Rate:
+      <input type="number" id="usdJpyRate" placeholder="Enter USDJPY rate">
+    </label>
+
+    <button onclick="calculate()">Calculate Lot Size</button>
+    <h3 id="result"></h3>
+  </div>
+
+  <script>
+    function calculate() {
+      let accountSize = parseFloat(document.getElementById('accountSize').value);
+      let riskPercent = parseFloat(document.getElementById('riskPercent').value);
+      let stopLoss = parseFloat(document.getElementById('stopLoss').value);
+      let pair = document.getElementById('pair').value;
+      let usdJpyRate = parseFloat(document.getElementById('usdJpyRate').value) || 150; // default if blank
+
+      let riskAmount = accountSize * (riskPercent / 100);
+      let pipValuePerLot;
+
+      if (pair === "XAUUSD") pipValuePerLot = 1;       // $1 per 0.01 move
+      else if (pair === "XAGUSD") pipValuePerLot = 50; // $50 per $1 move
+      else if (pair.endsWith("JPY")) pipValuePerLot = 9.1; // approx $9.1 per pip per lot
+      else pipValuePerLot = 10; // standard pairs
+
+      let lotSize = riskAmount / (stopLoss * pipValuePerLot);
+
+      document.getElementById("result").innerText =
+        "Lot Size: " + lotSize.toFixed(2) + " lots";
+    }
+
+    // Show USDJPY input only for JPY pairs
+    document.getElementById("pair").addEventListener("change", function() {
+      if (["USDJPY","CADJPY","AUDJPY"].includes(this.value))
+        document.getElementById("usdJpyRateBox").style.display = "block";
+      else
+        document.getElementById("usdJpyRateBox").style.display = "none";
+    });
+
+    // Register service worker for PWA
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").then(() => {
+        console.log("Service Worker Registered");
+      });
+    }
+  </script>
+</body>
+</html>
